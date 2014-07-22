@@ -229,3 +229,38 @@ class DateField(fields.DateField):
         if lookup_type in ('exact',):
             return value
         raise TypeError("DateField has invalid lookup: %s" % lookup_type)
+
+class BooleanField(fields.BooleanField):
+    def from_ldap(self, value, connection):
+        if len(value) == 0:
+            return False
+        if value[0] == "FALSE":
+            return False
+        else:
+            return True
+
+    def get_db_prep_lookup(self, lookup_type, value, connection,
+                           prepared=False):
+        "Returns field's value prepared for database lookup."
+        return [self.get_prep_lookup(lookup_type, value)]
+    
+    # def get_db_prep_save(self, value, connection):
+    #    return [str(value)]
+    def get_db_prep_save(self, value, connection):
+        if value == True:
+            return ["TRUE"]
+        else:
+            return ["FALSE"]
+
+    def get_prep_lookup(self, lookup_type, value):
+        "Perform preliminary non-db specific lookup checks and conversions"
+        if lookup_type in ('exact'):
+            if value == "0":
+                return "FALSE"
+            else:
+                return "TRUE"
+            
+        raise TypeError("IntegerField has invalid lookup: %s" % lookup_type)
+
+    def to_python(self, value):
+        return value
